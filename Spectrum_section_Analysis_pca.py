@@ -6,6 +6,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
+from sklearn import tree
 
 #create dataframe
 df = pd.read_csv(r'C:\Users\Daniel\Desktop\Git Projects\Collagen\Data\FTIR_merged_db_clean_2020-10-16.csv')
@@ -41,9 +42,9 @@ print(df.iloc[:,2])
 
 # delete spectral wavelength not relevant for study#
 spectrum_regions_repetition = []
-N = 100
+N = 10
 Data_columns = 7467 # number of wavelength features
-step_size = 50 # size of features groups
+step_size = 5 # size of features groups
 for j in range(0,N,1):
     spectrum_regions = []
     for i in range(1, int(Data_columns/step_size), 1): # iterate along 74 sections of spectrum
@@ -52,8 +53,6 @@ for j in range(0,N,1):
         b = list(range((3 + step_size*(i+1)), df.shape[1]))
 
         c = a + b
-        print(a)
-        print(b)
         df.drop(df.iloc[:, c], axis=1, inplace=True) #remove wavelengths we don´t want
 
 
@@ -91,11 +90,12 @@ for j in range(0,N,1):
 
         # SVM Model
 
-        model = LinearSVC(C=1, loss='hinge')
+        #model = LinearSVC(C=1, loss='hinge')
+        model = tree.DecisionTreeClassifier()
         model.fit(x_train, y_train)
         acc = model.score(x_test, y_test)
         print('spectral section ' + str(i))
-        print('SVM LinearSVC model accuracy ' + str(acc))
+        print('model accuracy ' + str(acc))
         spectrum_regions.append(acc)
 
     print(spectrum_regions)
@@ -105,12 +105,30 @@ matrix_acc = map(list, zip(*spectrum_regions_repetition))
 
 mean_region_acc = [sum(x)/N for x in matrix_acc]
 
-plt.figure(1)
-
 x_axis = range(1, int(Data_columns/step_size), 1)
+
+# create csv file with average accuracies
+import csv
+# field names
+fields = ['Spectrum section', 'avg. accuracy']
+columns = [x_axis, mean_region_acc]
+rows = [[columns[i][j] for i in range(2)] for j in range(len(x_axis))]# transpose columns to get rows
+
+# writing to csv file
+filename = 'acc_sections_tree_5.csv'
+with open(filename, 'w', newline='') as csvfile:
+    # creating a csv writer object
+    csvwriter = csv.writer(csvfile, delimiter=',')
+    # writing the fields
+    csvwriter.writerow(fields)
+    # writing the data rows
+    csvwriter.writerows(rows)
+
+plt.figure(1)
 
 plt.grid(which='both')
 plt.xlabel('spectrum section #')
 plt.ylabel('mean accuracy of SVM_LinearSVC model for spectrum region')
 plt.plot(x_axis, mean_region_acc)
 plt.show()
+
