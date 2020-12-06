@@ -42,9 +42,9 @@ print(df.iloc[:,2])
 
 # delete spectral wavelength not relevant for study#
 spectrum_regions_repetition = []
-N = 10
+N = 100
 Data_columns = 7467 # number of wavelength features
-step_size = 5 # size of features groups
+step_size = 3 # size of features groups
 for j in range(0,N,1):
     spectrum_regions = []
     for i in range(1, int(Data_columns/step_size), 1): # iterate along 74 sections of spectrum
@@ -72,8 +72,8 @@ for j in range(0,N,1):
         df_pca.insert(3, column='Collagen', value=y_list)
         df_final = df_pca
 
-        print(pca.explained_variance_ratio_)
-        print(sum(pca.explained_variance_ratio_))
+        #print(pca.explained_variance_ratio_)
+        #print(sum(pca.explained_variance_ratio_))
 
         X = df_pca.iloc[:, :3]
         y = df_pca.iloc[:, 3]
@@ -90,11 +90,13 @@ for j in range(0,N,1):
 
         # SVM Model
 
-        #model = LinearSVC(C=1, loss='hinge')
-        model = tree.DecisionTreeClassifier()
+        model = LinearSVC(C=1, loss='hinge')
+        #model = KNeighborsClassifier(n_neighbors=6)
+        #model = tree.DecisionTreeClassifier()
         model.fit(x_train, y_train)
         acc = model.score(x_test, y_test)
-        print('spectral section ' + str(i))
+        print(i, j)
+        #print('spectral section ' + str(i))
         print('model accuracy ' + str(acc))
         spectrum_regions.append(acc)
 
@@ -115,10 +117,10 @@ columns = [x_axis, mean_region_acc]
 rows = [[columns[i][j] for i in range(2)] for j in range(len(x_axis))]# transpose columns to get rows
 
 # writing to csv file
-filename = 'acc_sections_tree_5.csv'
+filename = 'acc_sections_svc_3.csv'
 with open(filename, 'w', newline='') as csvfile:
     # creating a csv writer object
-    csvwriter = csv.writer(csvfile, delimiter=',')
+    csvwriter = csv.writer(csvfile, delimiter=';')
     # writing the fields
     csvwriter.writerow(fields)
     # writing the data rows

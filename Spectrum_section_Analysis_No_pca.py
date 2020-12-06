@@ -42,9 +42,9 @@ print(df.iloc[:,2])
 
 # delete spectral wavelength not relevant for study#
 spectrum_regions_repetition = []
-N = 10
+N = 100
 Data_columns = 7467 # number of wavelength features
-step_size = 5 # size of features groups
+step_size = 3 # size of features groups
 for j in range(0,N,1):
     spectrum_regions = []
     df = df_original.copy(deep=True)
@@ -69,80 +69,31 @@ for j in range(0,N,1):
     y_train_o = y_train.copy(deep=True)
     y_test_o = y_test.copy(deep=True)
     for i in range(1, int(Data_columns/step_size), 1): # iterate along 74 sections of spectrum
-        print(j, i)
-        df = df_original.copy(deep=True)
-        X = X_o.copy(deep=True)
-        y = df.iloc[:, 1]
-        x_train = x_train_o.copy(deep=True)
-        x_test = x_test_o.copy(deep=True)
-        y_train = y_train_o.copy(deep=True)
-        y_test = y_test_o.copy(deep=True)
 
-        '''
-        a = list(range(0, (step_size*i - 1)))
-        b = list(range((step_size*(i)), X.shape[1]))
+        X_sec = X.iloc[:, [i,i-1+step_size]]
+        x_train_sec = x_train.iloc[:, [i,i-1+step_size]]
+        x_test_sec = x_test.iloc[:, [i,i-1+step_size]]
 
-        c = a + b
-        X.drop(X.iloc[:, c], axis=1, inplace=True) #remove wavelengths we don´t want
-        x_train.drop(x_train.iloc[:, c], axis=1, inplace=True)
-        x_test.drop(x_test.iloc[:, c], axis=1, inplace=True)
-        #y_train.drop(y_train.iloc[:, c], axis=1, inplace=True)
-        #y_test.drop(y_test.iloc[:, c], axis=1, inplace=True)
-        '''
-
-        X = X.iloc[:, [i,i-1+step_size]]
-        x_train = x_train.iloc[:, [i,i-1+step_size]]
-        x_test = x_test.iloc[:, [i,i-1+step_size]]
-
-
-        # Prepare X and Y
-        #X = df.iloc[:, 3:] # spectral data
-        #y = df.iloc[:, 1] # target
-        #y_list = list(y)
 
         # standardizing the features
         #X = StandardScaler().fit_transform(X)
 
-        '''
-        # PCA
-        pca = PCA(n_components=3, svd_solver='auto')
-        df_pca = pca.fit_transform(X=X)
-        df_pca = pd.DataFrame(df_pca)
-
-        df_pca.insert(3, column='Collagen', value=y_list)
-        df_final = df_pca
-
-        print(pca.explained_variance_ratio_)
-        print(sum(pca.explained_variance_ratio_))
-
-        X = df_pca.iloc[:, :3]
-        y = df_pca.iloc[:, 3]
-        '''
-
-        #Divide data between training and test
-
-        #x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, test_size=0.1)
-
 
         # Scale
-        sc = StandardScaler().fit(X)
-        x_train = sc.fit_transform(x_train)
-        x_test = sc.transform(x_test)
+        sc = StandardScaler().fit(X_sec)
+        x_train_sec = sc.fit_transform(x_train_sec)
+        x_test_sec = sc.transform(x_test_sec)
 
         # SVM Model
         #x_train = np.array(x_train)
         #x_test = np.array(x_test)
 
-        '''
-        model = KNeighborsClassifier(n_neighbors=6)
-        model.fit(x_train.reshape(-1, 1), y_train)
-        acc = model.score(x_test.reshape(-1, 1), y_test)
-        '''
 
+        #model = KNeighborsClassifier(n_neighbors=6)
         model = LinearSVC(C=1, loss='hinge')
-        model.fit(x_train, y_train)
-        acc = model.score(x_test, y_test)
-        #print('spectral section ' + str(i))
+        model.fit(x_train_sec, y_train)
+        acc = model.score(x_test_sec, y_test)
+        print(j, i)
         print('model accuracy ' + str(acc))
         spectrum_regions.append(acc)
 
@@ -165,12 +116,12 @@ fields = ['Spectrum section', 'avg. accuracy']
 columns = [x_axis, mean_region_acc]
 rows = [[columns[i][j] for i in range(2)] for j in range(len(x_axis))]# transpose colums to get rows
 
-filename = 'acc_columns'
+filename = 'acc_3columns_svc_NOpca.csv'
 
 # writing to csv file
 with open(filename, 'w', newline='') as csvfile:
     # creating a csv writer object
-    csvwriter = csv.writer(csvfile, delimiter=',')
+    csvwriter = csv.writer(csvfile, delimiter=';')
     # writing the fields
     csvwriter.writerow(fields)
     # writing the data rows
