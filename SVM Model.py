@@ -36,15 +36,16 @@ df.drop(L, axis=0, inplace=True)
 df_original = df.copy(deep=True)
 
 # Remove wavelengths in which we are not interested
-a = list(range(24, 2367)) # up to 1500 wavelength
-b = list(range(2543, df.shape[1])) #from 1630 wavelegth
+a = list(range(2, 2489)) # 2367 (up to 1500 wavelength)
+b = list(range(2492, df.shape[1])) # 2543 (from 1630 wavelegth)
 c = a + b
 df.drop(df.iloc[:, c], axis=1, inplace=True)
-
+print(df)
 
 # Prepare X and Y
-X = df.iloc[:, 3:]  # spectral data
+X = df.iloc[:, 2:]  # spectral data
 y = df.iloc[:, 1]  # column
+print(X)
 y_list = list(y)
 
 # standardizing the features

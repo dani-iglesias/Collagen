@@ -37,17 +37,25 @@ L = L1 + L2
 df.drop(L, axis=0, inplace=True)
 df_original = df.copy(deep=True)
 
+# frequency axis
+freq_axis = df.iloc[:0, 3:]
+freq_axis =list(map(lambda x: x[1:], freq_axis))
+freq_axis = [float(x) for x in freq_axis]
+print(freq_axis)
+print(len(freq_axis))
+
+
 print('juasjuas')
 print(df.iloc[:,2])
 
 # delete spectral wavelength not relevant for study#
 spectrum_regions_repetition = []
-N = 100
+N = 1
 Data_columns = 7467 # number of wavelength features
-step_size = 3 # size of features groups
+step_size = 20 # size of features groups
 for j in range(0,N,1):
     spectrum_regions = []
-    for i in range(1, int(Data_columns/step_size), 1): # iterate along 74 sections of spectrum
+    for i in range(1, int(Data_columns/step_size)+1, 1): # iterate along 74 sections of spectrum
         df = df_original.copy(deep=True)
         a = list(range(3, (3 + step_size*i)))
         b = list(range((3 + step_size*(i+1)), df.shape[1]))
@@ -107,7 +115,14 @@ matrix_acc = map(list, zip(*spectrum_regions_repetition))
 
 mean_region_acc = [sum(x)/N for x in matrix_acc]
 
-x_axis = range(1, int(Data_columns/step_size), 1)
+#x_axis = range(1, int(Data_columns/step_size), 1)
+Positions = range(0, len(freq_axis) - Data_columns % step_size , step_size)
+print(list(Positions))
+x_axis = [freq_axis[i] for i in Positions]
+
+print(len(x_axis))
+print(len(mean_region_acc))
+print('aquiii')
 
 # create csv file with average accuracies
 import csv
@@ -117,7 +132,7 @@ columns = [x_axis, mean_region_acc]
 rows = [[columns[i][j] for i in range(2)] for j in range(len(x_axis))]# transpose columns to get rows
 
 # writing to csv file
-filename = 'acc_sections_svc_3.csv'
+filename = 'Mean accuracy of SVM LinearSVC pca_3columns'
 with open(filename, 'w', newline='') as csvfile:
     # creating a csv writer object
     csvwriter = csv.writer(csvfile, delimiter=';')
@@ -129,8 +144,9 @@ with open(filename, 'w', newline='') as csvfile:
 plt.figure(1)
 
 plt.grid(which='both')
-plt.xlabel('spectrum section #')
-plt.ylabel('mean accuracy of SVM_LinearSVC model for spectrum region')
+plt.title(filename)
+plt.xlabel('Wavelenght (nm)')
+plt.ylabel('mean accuracy of model')
 plt.plot(x_axis, mean_region_acc)
 plt.show()
 
