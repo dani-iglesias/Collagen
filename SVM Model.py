@@ -8,6 +8,8 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC, SVC
 from sklearn.pipeline import Pipeline
+from sklearn.ensemble import VotingClassifier
+from sklearn import tree
 
 # create dataframe
 df = pd.read_csv(r'C:\Users\Daniel\Desktop\Git Projects\Collagen\Data\FTIR_merged_db_clean_2020-10-16.csv')
@@ -36,14 +38,14 @@ df.drop(L, axis=0, inplace=True)
 df_original = df.copy(deep=True)
 
 # Remove wavelengths in which we are not interested
-a = list(range(2, 2489)) # 2367 (up to 1500 wavelength)
-b = list(range(2492, df.shape[1])) # 2543 (from 1630 wavelegth)
-c = a + b
-df.drop(df.iloc[:, c], axis=1, inplace=True)
+#a = list(range(2, 2454)) # 2367 (up to 1500 wavelength)
+#b = list(range(2457, df.shape[1])) # 2543 (from 1630 wavelegth)
+#c = a + b
+#df.drop(df.iloc[:, c], axis=1, inplace=True)
 print(df)
 
 # Prepare X and Y
-X = df.iloc[:, 2:]  # spectral data
+X = df.loc[:, ['X1582.307', 'X1582.789', 'X1583.271']]  # spectral data
 y = df.iloc[:, 1]  # column
 print(X)
 y_list = list(y)
@@ -89,7 +91,22 @@ acc = model.score(x_test, y_test)
 print('The model accuracy is: ' + str(acc))
 '''
 
-model = LinearSVC(C=1, loss='hinge')
+
+clf1 = LinearSVC(C=1, loss='hinge')
+clf2 = KNeighborsClassifier(n_neighbors=6)
+clf3 = tree.DecisionTreeClassifier()
+
+model = VotingClassifier(
+    estimators=[('svc', clf1), ('knne', clf2), ('tr', clf3)],
+    voting='hard'
+)
+
+clf1.fit(x_train, y_train)
+clf2.fit(x_train, y_train)
+clf3.fit(x_train, y_train)
 model.fit(x_train, y_train)
+acc1 = clf1.score(x_test, y_test)
+acc2 = clf2.score(x_test, y_test)
+acc3 = clf3.score(x_test, y_test)
 acc = model.score(x_test, y_test)
-print('The model accuracy is: ' + str(acc))
+print('The models accuracy is: ' + str(acc) + ', ' + str(acc1) + ', ' + str(acc2) + ', ' + str(acc3))

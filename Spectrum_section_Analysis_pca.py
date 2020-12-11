@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn import tree
+from sklearn.ensemble import VotingClassifier
 
 #create dataframe
 df = pd.read_csv(r'C:\Users\Daniel\Desktop\Git Projects\Collagen\Data\FTIR_merged_db_clean_2020-10-16.csv')
@@ -50,12 +51,12 @@ print(df.iloc[:,2])
 
 # delete spectral wavelength not relevant for study#
 spectrum_regions_repetition = []
-N = 1
+N = 100
 Data_columns = 7467 # number of wavelength features
-step_size = 20 # size of features groups
+step_size = 3 # size of features groups
 for j in range(0,N,1):
     spectrum_regions = []
-    for i in range(1, int(Data_columns/step_size)+1, 1): # iterate along 74 sections of spectrum
+    for i in range(0, int(Data_columns/step_size), 1): # iterate along 74 sections of spectrum
         df = df_original.copy(deep=True)
         a = list(range(3, (3 + step_size*i)))
         b = list(range((3 + step_size*(i+1)), df.shape[1]))
@@ -98,9 +99,19 @@ for j in range(0,N,1):
 
         # SVM Model
 
-        model = LinearSVC(C=1, loss='hinge')
+        #model = LinearSVC(C=1, loss='hinge')
         #model = KNeighborsClassifier(n_neighbors=6)
         #model = tree.DecisionTreeClassifier()
+
+        clf1 = LinearSVC(C=1, loss='hinge')
+        clf2 = KNeighborsClassifier(n_neighbors=6)
+        clf3 = tree.DecisionTreeClassifier()
+
+        model = VotingClassifier(
+            estimators=[('svc', clf1), ('knne', clf2), ('tr', clf3)],
+            voting='hard'
+        )
+
         model.fit(x_train, y_train)
         acc = model.score(x_test, y_test)
         print(i, j)
@@ -132,7 +143,7 @@ columns = [x_axis, mean_region_acc]
 rows = [[columns[i][j] for i in range(2)] for j in range(len(x_axis))]# transpose columns to get rows
 
 # writing to csv file
-filename = 'Mean accuracy of SVM LinearSVC pca_3columns'
+filename = 'Mean accuracy of Voting_classifier pca_3columns.csv'
 with open(filename, 'w', newline='') as csvfile:
     # creating a csv writer object
     csvwriter = csv.writer(csvfile, delimiter=';')
