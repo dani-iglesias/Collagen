@@ -10,6 +10,7 @@ from sklearn import tree
 from sklearn.ensemble import VotingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 
 #create dataframe
 df = pd.read_csv(r'C:\Users\Daniel\Desktop\Git Projects\Collagen\Data\FTIR_merged_db_clean_2020-10-16.csv')
@@ -53,9 +54,9 @@ print(df.iloc[:,2])
 
 # delete spectral wavelength not relevant for study#
 spectrum_regions_repetition = []
-N = 1
+N = 100
 Data_columns = 7467 # number of wavelength features
-step_size = 3 # size of features groups
+step_size = 1000 # size of features groups
 for j in range(0,N,1):
     spectrum_regions = []
     for i in range(0, int(Data_columns/step_size), 1): # iterate along 74 sections of spectrum
@@ -75,19 +76,19 @@ for j in range(0,N,1):
         # standardizing the features
         X = StandardScaler().fit_transform(X)
 
-        # PCA
-        pca = PCA(n_components=3, svd_solver='auto')
-        df_pca = pca.fit_transform(X=X)
-        df_pca = pd.DataFrame(df_pca)
+        # LDA
+        lda = LDA(n_components=1)
+        df_lda = lda.fit_transform(X, y)
+        df_lda = pd.DataFrame(df_lda)
 
-        df_pca.insert(3, column='Collagen', value=y_list)
-        df_final = df_pca
+        df_lda.insert(1, column='Collagen', value=y_list)
+        df_final = df_lda
 
         #print(pca.explained_variance_ratio_)
         #print(sum(pca.explained_variance_ratio_))
 
-        X = df_pca.iloc[:, :3]
-        y = df_pca.iloc[:, 3]
+        X = df_lda.iloc[:, :1]
+        y = df_lda.iloc[:, 1]
 
         #Divide data between training and test
 
@@ -101,9 +102,9 @@ for j in range(0,N,1):
 
         # Model
 
-        model = RandomForestClassifier()
+        #model = RandomForestClassifier()
         #model = LogisticRegression()
-        #model = LinearSVC(C=1, loss='hinge')
+        model = LinearSVC(C=1, loss='hinge')
         #model = KNeighborsClassifier(n_neighbors=6)
         #model = tree.DecisionTreeClassifier()
 
@@ -149,7 +150,7 @@ columns = [x_axis, mean_region_acc]
 rows = [[columns[i][j] for i in range(2)] for j in range(len(x_axis))]# transpose columns to get rows
 
 # writing to csv file
-filename = 'Mean accuracy of RandomForest pca_3columns.csv'
+filename = 'Mean accuracy of SVM LinearSVC LDA_1000columns.csv'
 with open(filename, 'w', newline='') as csvfile:
     # creating a csv writer object
     csvwriter = csv.writer(csvfile, delimiter=';')

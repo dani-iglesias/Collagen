@@ -23,9 +23,9 @@ L1 = []
 L2 = []
 for j in range(len(df.iloc[:])):
 
-    if df.Collagen[j] == 'Low': # delete rows with Indet or low collagen
-        L1.append(j)
-    elif df.Collagen[j] == 'Indet':
+    #if df.Collagen[j] == 'Low': # delete rows with Indet or low collagen
+    #    L1.append(j)
+    if df.Collagen[j] == 'Indet':
         L1.append(j)
     else:
         if df.FTIR[j] == 'No': # get list with the indexes of rows without spectrum
@@ -97,8 +97,8 @@ print(df_pca)
 plt.figure(3)
 ax = plt.axes(projection ="3d")
 
-targets = ['Yes', 'No']
-colors = ['r', 'b']
+targets = ['Yes', 'No', 'Low']
+colors = ['r', 'b', 'y']
 for target, color in zip(targets, colors):
     indicesToKeep = df_final['Collagen'] == target
     ax.scatter3D(df_final.loc[indicesToKeep, 0], df_final.loc[indicesToKeep, 1], df_final.loc[indicesToKeep, 2], c=color)
