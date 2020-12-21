@@ -25,19 +25,23 @@ df.drop(['Specimen_ID', 'ORAU_Collagen', 'Site_Name', 'Site_Area', 'Site_Locus',
 L1 = []
 L2 = []
 df_indet = pd.DataFrame(columns=df.columns.values.tolist())
-#print(df.iloc[279, :])
+df_low = pd.DataFrame(columns=df.columns.values.tolist())
 for j in range(len(df.iloc[:, 0])):
 
-    if df.Collagen[j] == 'Low':  # delete rows with Indet or low collagen
-        L1.append(j)
-    elif df.Collagen[j] == 'Indet':
-        L1.append(j)
-        print(j)
-        df_indet = df_indet.append(df.iloc[j, :], ignore_index=True)
-        print(df_indet)
+    if df.FTIR[j] == 'No':
+        L2.append(j)
     else:
-        if df.FTIR[j] == 'No':  # get list with the indexes of rows without spectrum
-            L2.append(j)
+        if df.Collagen[j] == 'Low':  # delete rows with Indet or low collagen
+            L1.append(j)
+            df_low = df_low.append(df.iloc[j, :], ignore_index=True)
+        elif df.Collagen[j] == 'Indet':
+            L1.append(j)
+            print(j)
+            df_indet = df_indet.append(df.iloc[j, :], ignore_index=True)
+            print(df_indet)
+#    else:
+#        if df.FTIR[j] == 'No':  # get list with the indexes of rows without spectrum
+#            L2.append(j)
 
 print('tool')
 print(df_indet)
@@ -78,32 +82,21 @@ y = df_pca.iloc[:, 1]
 
 # transform (with same transformation) Indet rows to later be tested
 df_indet = df_indet.iloc[:, 1000:2000]
-df_indet_pca = pca.transform(df_indet)
+df_indet_pca = pd.DataFrame(pca.transform(df_indet))
+
+df_low = df_low.iloc[:, 1000:2000]
+df_low_pca = pd.DataFrame(pca.transform(df_low))
 
 # Divide data between training and test
 x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, test_size=0.1)
 
 #Scale
-sc = StandardScaler().fit(X)
-x_train = sc.fit_transform(x_train)
-x_test = sc.transform(x_test)
+#sc = StandardScaler().fit(X)
+#x_train = sc.fit_transform(x_train)
+#x_test = sc.transform(x_test)
 
-#Model
-'''
-polynomial_svm_clf = Pipeline([
-    ("poly_features", PolynomialFeatures(degree=3)),
-    ("svm_clf", LinearSVC(C=10, loss='hinge'))
-])
-acc = svm_clf.score(x_test, y_test)
-print('The model accuracy is: ' + str(acc))
-'''
 
-'''
-model = SVC(kernel='poly', degree=5, C=1)#, loss='hinge')
-model.fit(x_train, y_train)
-acc = model.score(x_test, y_test)
-print('The model accuracy is: ' + str(acc))
-'''
+
 
 
 clf1 = LinearSVC(C=1, loss='hinge')
@@ -115,15 +108,51 @@ model = VotingClassifier(
     voting='hard'
 )
 
-clf1.fit(x_train, y_train)
-clf2.fit(x_train, y_train)
-clf3.fit(x_train, y_train)
-model.fit(x_train, y_train)
-acc1 = clf1.score(x_test, y_test)
-acc2 = clf2.score(x_test, y_test)
-acc3 = clf3.score(x_test, y_test)
-acc = model.score(x_test, y_test)
-print('The models accuracy is: ' + str(acc) + ', ' + str(acc1) + ', ' + str(acc2) + ', ' + str(acc3))
+clf1.fit(X, y)
+#clf2.fit(x_train, y_train)
+#clf3.fit(x_train, y_train)
+#model.fit(x_train, y_train)
+#acc1 = clf1.score(x_test, y_test)
+#acc2 = clf2.score(x_test, y_test)
+#acc3 = clf3.score(x_test, y_test)
+#acc = model.score(x_test, y_test)
+#print('The models accuracy is: ' + str(acc) + ', ' + str(acc1) + ', ' + str(acc2) + ', ' + str(acc3))
 
-print('dede')
+#print('dede')
 print(clf1.predict(df_indet_pca))
+
+plt.figure(1)
+
+y = list(y)
+print('df')
+print(X)
+X = X.iloc[:, 0]
+print(X)
+print(y)
+
+X_indet = list(df_indet_pca.iloc[:, 0])
+X_low = list(df_low_pca.iloc[:, 0])
+X_yes = []
+X_no = []
+for i, a in enumerate(X):
+    if y[i] == 'Yes':
+        X_yes.append(a)
+    if y[i] == 'No':
+        X_no.append(a)
+
+
+
+#X_yes = [x, i for x in X for i in y if i == 'Yes']
+#X_no = [x for x in X for i in y if i == 'No']
+#X_no = [x for [x, i] in [X, y] if i == 'No']
+print(len(X_yes))
+print(len(X_no))
+print(len(X_indet))
+#colors = ['r', 'b']
+targets = ['Yes', 'No', 'Indet', 'Low']
+
+plt.hist([X_yes, X_no, X_indet, X_low], color=['r', 'b', 'g', 'y'], bins=100)
+#plt.hist(df_indet_pca, color='g', bins=100)
+plt.legend(targets)
+
+plt.show()
